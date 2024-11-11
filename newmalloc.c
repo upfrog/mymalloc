@@ -15,6 +15,57 @@ struct block_meta {
 
 void *global_base = NULL;
 
+
+
+
+struct block_meta *get_block_ptr(void *ptr)
+{
+	return (struct block_meta*)ptr - 1;
+}
+
+
+//Consider behavior if a block has already been freed
+void free(void *ptr)
+{
+	if (!ptr)
+	{
+		return;
+	}
+
+	struct block_meta* block_ptr = get_block(ptr);
+	assert(block_ptr -> free == 0);
+	assert(bloc_ptr -> debug == 0x77777777 || block_ptr -> debug == 0x12345678);
+	block_ptr -> free = 1;
+	block_ptr -> magic = 0x55555555;
+}
+
+void *realloc(void *ptr, t_size size)
+{
+	if (!ptr)
+	{
+		return malloc(size);
+	}
+
+	struct block_meta* block_ptr = get_block_ptr(ptr);
+	if (block_ptr -> size >= size)
+	{
+		//this should probably wait until I actually free up unneeded memory	
+		//block_ptr -> size = size;
+		return ptr;
+	}
+	
+	void *new_block_ptr;
+	new_block_ptr = malloc(size);
+	if (!new_block_ptr)
+	{
+		return NULL;
+	}
+	memcpy(new_block_ptr, ptr, block_ptr -> size);
+	free(ptr);
+	return new_block_ptr;
+}
+
+
 void *malloc(size_t size)
 {
 	struct block_meta *block;
