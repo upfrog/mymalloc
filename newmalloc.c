@@ -4,6 +4,14 @@
 #include <unistd.h>
 
 
+void free(void *ptr);
+void *realloc(void *ptr, size_t size);
+void *calloc(size_t, size_t);
+void *malloc(size_t);
+struct block_meta *find_free_block(struct block_meta **last, size_t);
+struct block_meta *request_space(struct block_meta* last, size_t);
+struct block_meta *get_block_ptr(void *ptr);
+
 struct block_meta {
 	size_t size;
 	struct block_meta *next;
@@ -32,14 +40,14 @@ void free(void *ptr)
 		return;
 	}
 
-	struct block_meta* block_ptr = get_block(ptr);
+	struct block_meta *block_ptr = get_block_ptr(ptr);
 	assert(block_ptr -> free == 0);
-	assert(bloc_ptr -> debug == 0x77777777 || block_ptr -> debug == 0x12345678);
+	assert(block_ptr -> debug == 0x77777777 || block_ptr -> debug == 0x12345678);
 	block_ptr -> free = 1;
-	block_ptr -> magic = 0x55555555;
+	block_ptr -> debug = 0x55555555;
 }
 
-void *realloc(void *ptr, t_size size)
+void *realloc(void *ptr, size_t size)
 {
 	if (!ptr)
 	{
@@ -63,6 +71,15 @@ void *realloc(void *ptr, t_size size)
 	memcpy(new_block_ptr, ptr, block_ptr -> size);
 	free(ptr);
 	return new_block_ptr;
+}
+
+
+void *calloc(size_t elems_count, size_t elem_size)
+{
+	size_t size = elems_count * elem_size;
+	void *ptr = malloc(size);
+	memset(ptr, 0, size);
+	return ptr;
 }
 
 
@@ -102,20 +119,6 @@ void *malloc(size_t size)
 	return (block+1);
 }
 
-
-	void *p = sbrk(0);
-	void *request = sbrk(size);
-
-	if (request == (void*) -1)
-	{
-		return NULL;
-	}
-	else 
-	{
-		assert(p == request);
-		return p;
-	}
-}
 
 struct block_meta *find_free_block(struct block_meta **last, size_t size)
 {
