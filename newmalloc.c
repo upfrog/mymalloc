@@ -17,6 +17,41 @@ void *global_base = NULL;
 
 void *malloc(size_t size)
 {
+	struct block_meta *block;
+
+	//Nothing to allocate
+	if (size <= 0)
+	{
+		return NULL;
+	}
+
+	//In this case, this is the first malloc
+	if (!global_base)
+	{
+		block = request_space(NULL, size);
+		if (!block)
+		{
+			return NULL;
+		}
+	}
+	else
+	{
+		struct block_meta *last = global_base;
+		block = find_free_block(&last, size);
+		if (!block)
+		{
+			return NULL;
+		}
+		else
+		{
+			block -> free = 0;
+			block -> debug = 0x77777777;
+		}
+	}
+	return (block+1);
+}
+
+
 	void *p = sbrk(0);
 	void *request = sbrk(size);
 
